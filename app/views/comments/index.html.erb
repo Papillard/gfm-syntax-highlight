@@ -1,0 +1,80 @@
+<h1>Handling GFM + syntax highlight</h1>
+<ol>
+	<li>in Gemfile 
+	<%= markdown(
+	%Q[
+```ruby
+gem 'github-markdown'
+gem 'albino'
+gem 'nokogiri'
+```
+	])
+	%>
+	</li>
+	<li>install Pygments (python library)
+<%= markdown(
+%Q[
+```
+easy_install Pygments
+```
+])
+%>		
+	</li>
+	<li>in application helper
+<%= markdown(
+%Q[
+```ruby
+module ApplicationHelper
+  def markdown(text)
+    # If using Redcarpet gem
+    #options = { :autolink => true, :fenced_code_blocks => true }
+    #syntax_highlighter(Redcarpet::Markdown.new(Redcarpet::Render::HTML, options).render(text)).html_safe
+    
+    # Otherwise with github-mardown gem
+    syntax_highlight(GitHub::Markdown.render_gfm(text)).html_safe
+  end
+  
+  def syntax_highlight(html)
+    doc = Nokogiri::HTML(html)
+    doc.search("//pre[@lang]").each do |pre|
+      pre.replace Albino.colorize(pre.text.rstrip, pre[:lang])
+    end
+    doc.to_s
+  end
+end
+```
+])
+%>		
+
+		
+	</li>
+	<li>use it in any view
+<%= markdown(
+%Q[
+```ruby
+raw markdown('whatever gfm text')
+
+```
+])
+%>		
+	</li>
+	<li>custom your syntax highlight adding pygment custom CSS (look on google for choosing the highlight you like) 
+	<%= markdown("`syntax_highlight.css`")%></li>
+	<li>You're done buddy !</li>
+</ol>
+
+
+<% @comments.each do |comment| %>
+<div class="row-fluid">
+	<div class="span12">
+	  <%= raw markdown(comment.content)%>
+    <%= link_to 'Show', comment %>
+    <%= link_to 'Edit', edit_comment_path(comment) %>
+    <%= link_to 'Destroy', comment, method: :delete, data: { confirm: 'Are you sure?' } %>
+	</div>
+</div>
+  
+<% end %>
+
+
+<%= link_to 'New Comment', new_comment_path %>
